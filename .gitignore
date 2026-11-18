@@ -49,3 +49,5 @@ htmlcov/
 data/parquet/
 data/dlq/
 data/checkpoints/
+data/parquet_bench/
+python/data/

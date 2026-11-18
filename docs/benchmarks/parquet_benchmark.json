@@ -1,0 +1,22 @@
+{
+  "timestamp_utc": "2026-11-18T13:36:12.713033+00:00",
+  "environment": {
+    "os": "Darwin",
+    "os_release": "25.4.0",
+    "machine": "arm64",
+    "python_version": "3.14.6"
+  },
+  "benchmark_type": "in_process_pyarrow_parquet_and_duckdb_olap",
+  "parameters": {
+    "n_records": 50000,
+    "batch_size": 5000,
+    "compression": "snappy"
+  },
+  "results": {
+    "write_duration_ms": 220.83,
+    "parquet_throughput_records_per_sec": 226415.1,
+    "duckdb_aggregation_query_ms": 5.92,
+    "duckdb_groupby_query_ms": 2.89,
+    "duckdb_anomaly_scan_ms": 3.45
+  }
+}

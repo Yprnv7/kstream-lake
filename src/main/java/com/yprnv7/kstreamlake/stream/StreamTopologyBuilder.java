@@ -79,9 +79,23 @@ public class StreamTopologyBuilder {
                             agg.setUserId(userId);
                             agg.setTransactionCount(agg.getTransactionCount() + 1);
                             agg.setTotalVolume(agg.getTotalVolume() + tx.getAmount());
+                            agg.setSumOfSquares(agg.getSumOfSquares() + (tx.getAmount() * tx.getAmount()));
                             agg.setMaxTransactionAmount(Math.max(agg.getMaxTransactionAmount(), tx.getAmount()));
                             agg.setAverageAmount(agg.getTotalVolume() / agg.getTransactionCount());
-                            if (tx.getAmount() > 10000.0 || agg.getTransactionCount() > 50) {
+
+                            // Rolling Z-score anomaly detection across windowed distribution
+                            if (agg.getTransactionCount() >= 3) {
+                                double mean = agg.getAverageAmount();
+                                double variance = (agg.getSumOfSquares() / agg.getTransactionCount()) - (mean * mean);
+                                double stdDev = Math.sqrt(Math.max(0.0001, variance));
+                                double zScore = Math.abs(tx.getAmount() - mean) / stdDev;
+                                agg.setZScore(zScore);
+
+                                // Flag transactions exceeding 3 standard deviations (Z >= 3.0) or hard bounds
+                                if (zScore >= 3.0 || tx.getAmount() > 10000.0) {
+                                    agg.setAnomalyFlag(true);
+                                }
+                            } else if (tx.getAmount() > 10000.0) {
                                 agg.setAnomalyFlag(true);
                             }
                             return agg;

@@ -26,6 +26,12 @@ public class UserWindowAggregation {
     @JsonProperty("average_amount")
     private double averageAmount;
 
+    @JsonProperty("sum_of_squares")
+    private double sumOfSquares;
+
+    @JsonProperty("z_score")
+    private double zScore;
+
     @JsonProperty("anomaly_flag")
     private boolean anomalyFlag;
 
@@ -35,6 +41,7 @@ public class UserWindowAggregation {
     public UserWindowAggregation(String userId, long windowStart, long windowEnd, 
                                   long transactionCount, double totalVolume, 
                                   double maxTransactionAmount, double averageAmount, 
+                                  double sumOfSquares, double zScore,
                                   boolean anomalyFlag) {
         this.userId = userId;
         this.windowStart = windowStart;
@@ -43,6 +50,8 @@ public class UserWindowAggregation {
         this.totalVolume = totalVolume;
         this.maxTransactionAmount = maxTransactionAmount;
         this.averageAmount = averageAmount;
+        this.sumOfSquares = sumOfSquares;
+        this.zScore = zScore;
         this.anomalyFlag = anomalyFlag;
     }
 
@@ -100,6 +109,22 @@ public class UserWindowAggregation {
 
     public void setAverageAmount(double averageAmount) {
         this.averageAmount = averageAmount;
+    }
+
+    public double getSumOfSquares() {
+        return sumOfSquares;
+    }
+
+    public void setSumOfSquares(double sumOfSquares) {
+        this.sumOfSquares = sumOfSquares;
+    }
+
+    public double getZScore() {
+        return zScore;
+    }
+
+    public void setZScore(double zScore) {
+        this.zScore = zScore;
     }
 
     public boolean isAnomalyFlag() {

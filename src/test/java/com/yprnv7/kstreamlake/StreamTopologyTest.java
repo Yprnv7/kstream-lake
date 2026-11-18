@@ -143,4 +143,41 @@ public class StreamTopologyTest {
         UserWindowAggregation agg = aggregates.get(aggregates.size() - 1);
         assertTrue(agg.isAnomalyFlag());
     }
+
+    @Test
+    @DisplayName("Rolling Z-score anomaly detector flags transactions > 3 standard deviations above window mean")
+    public void testZScoreStatisticalAnomalyDetection() {
+        long now = Instant.now().toEpochMilli();
+        String userId = "usr-stat-01";
+
+        // Feed baseline transactions with small natural variance around 20.0
+        double[] baselineAmounts = {20.0, 22.0, 19.0, 21.0, 20.5, 19.5, 20.0, 21.5, 19.0, 20.0};
+        for (int i = 0; i < baselineAmounts.length; i++) {
+            String json = String.format(
+                    "{\"transaction_id\":\"tx-base-%d\",\"user_id\":\"%s\",\"merchant_id\":\"m-groceries\",\"amount\":%.2f,\"currency\":\"EUR\",\"country\":\"IE\",\"timestamp\":%d}",
+                    i, userId, baselineAmounts[i], now + (i * 100)
+            );
+            inputTopic.pipeInput(userId, json);
+        }
+
+        // Verify baseline has no anomaly flag
+        List<UserWindowAggregation> baselineAggs = aggregateOutputTopic.readValuesToList();
+        assertFalse(baselineAggs.isEmpty());
+        UserWindowAggregation lastBaseline = baselineAggs.get(baselineAggs.size() - 1);
+        assertFalse(lastBaseline.isAnomalyFlag(), "Baseline transactions should not trigger anomaly");
+
+        // Inject sudden spike > 3 standard deviations (e.g. 150.0 vs mean ~20 with stdDev ~1)
+        String spikeJson = String.format(
+                "{\"transaction_id\":\"tx-spike\",\"user_id\":\"%s\",\"merchant_id\":\"m-electronics\",\"amount\":150.0,\"currency\":\"EUR\",\"country\":\"IE\",\"timestamp\":%d}",
+                userId, now + 2000
+        );
+        inputTopic.pipeInput(userId, spikeJson);
+
+        List<UserWindowAggregation> afterSpikeAggs = aggregateOutputTopic.readValuesToList();
+        assertFalse(afterSpikeAggs.isEmpty());
+        UserWindowAggregation spikeAgg = afterSpikeAggs.get(afterSpikeAggs.size() - 1);
+
+        assertTrue(spikeAgg.isAnomalyFlag(), "Spike > 3 std devs must trigger anomalyFlag = true");
+        assertTrue(spikeAgg.getZScore() >= 3.0, "Z-score must be >= 3.0, actual: " + spikeAgg.getZScore());
+    }
 }
